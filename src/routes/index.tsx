@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { Home, Folder, Wrench, Mail, Phone, MapPin, GraduationCap, ArrowRight, ExternalLink, Code2, Linkedin, Sparkles, Bot, Workflow, Plug, ShieldCheck, Wallet, Coins, Image, Vote, Network, Smartphone, ShoppingBag, FileCode2, LayoutTemplate, Palette, Store, CheckCheck, Video, Search, Terminal, MessageSquare } from "lucide-react";
+import { Home, Folder, Wrench, Mail, Phone, MapPin, GraduationCap, ArrowRight, ExternalLink, Download, Code2, Linkedin, Sparkles, Bot, Workflow, Plug, ShieldCheck, Wallet, Coins, Image, Vote, Network, Smartphone, ShoppingBag, FileCode2, LayoutTemplate, Palette, Store, CheckCheck, Video, Search, Terminal, MessageSquare } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import xpetgame from "@/assets/projects/xpetgame.jpg";
 import beeyoond from "@/assets/projects/beeyoond.png";
 import mywigImage from "@/assets/projects/mywig.jpg";
 import testImage from "@/assets/projects/test-website.png";
+import resumeUrl from "@/assets/projects/kaleeswari_resume_m.pdf?url";
 gsap.registerPlugin(ScrollTrigger);
 
 export const Route = createFileRoute("/")({
@@ -266,7 +267,7 @@ function Index() {
               aria-label={id === "tools" ? "Skills" : id.charAt(0).toUpperCase() + id.slice(1)}
               title={id === "tools" ? "Skills" : id.charAt(0).toUpperCase() + id.slice(1)}
               onClick={() => scrollTo(id)}
-              className={`grid h-10 w-10 place-items-center rounded-full transition-all duration-300 hover:scale-110 hover:text-nav-foreground ${
+              className={`grid h-10 w-10 place-items-center rounded-full transition-all duration-300 hover:scale-110 hover:bg-primary hover:text-primary-foreground ${
                 id === "home" ? "bg-primary text-primary-foreground scale-110" : "text-nav-foreground/60"
               }`}
             >
@@ -313,7 +314,7 @@ function Index() {
         </aside>
 
         {/* RIGHT */}
-        <main className="space-y-32 pb-32">
+        <main className="min-w-0 space-y-32 pb-32">
           {/* Hero */}
           <section id="home" data-section className="flex min-h-[70vh] flex-col justify-center">
             <div data-reveal className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs uppercase tracking-normal text-primary">
@@ -334,7 +335,7 @@ function Index() {
               <Stat n="React" label={"FRONTEND\nDEVELOPMENT"} />
               <Stat n="AI" label={"ASSISTED\nDEVELOPMENT"} />
             </div>
-            <div data-reveal className="mt-6 flex items-center gap-6">
+            <div data-reveal className="mt-6 flex flex-wrap items-center gap-4 sm:gap-6">
               <Button
                 onClick={() => scrollTo("contact")}
                 className="shimmer relative overflow-hidden rounded-md bg-[image:var(--gradient-primary)] px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-[var(--shadow-glow)] transition-all duration-300 hover:-translate-y-0.5"
@@ -342,8 +343,19 @@ function Index() {
                 Let's Talk
               </Button>
               <Button
+                asChild
+                variant="outline"
+                className="border-primary/30 bg-transparent text-primary hover:border-primary hover:bg-primary/5 hover:text-primary"
+              >
+                <a href={resumeUrl} download="kaleeswari_resume_m.pdf">
+                  <Download aria-hidden="true" size={16} />
+                  Download CV
+                </a>
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => scrollTo("work")}
-                className="link-underline group inline-flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary"
+                className="link-underline group bg-transparent text-foreground shadow-none hover:bg-transparent hover:text-primary"
               >
                 My work
                 <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
@@ -372,11 +384,15 @@ function Index() {
           {/* Work */}
           <section id="work" data-section>
             <h2 data-heading className="text-2xl font-bold uppercase">Selected Work</h2>
-            <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+            <ul
+              aria-label="Selected work projects"
+              tabIndex={0}
+              className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain py-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:py-0"
+            >
               {projects.map((p) => {
                 const image = projectImage(p.title);
                 return (
-                <li key={p.title} data-reveal>
+                <li key={p.title} data-reveal className="min-w-0 basis-[calc(90%-1rem)] shrink-0 snap-start sm:basis-auto">
                   <article className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-[var(--shadow-hover)]">
                     <div className="relative aspect-video w-full overflow-hidden border-b border-border bg-muted">
                       {image ? (

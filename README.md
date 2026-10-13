@@ -16,6 +16,19 @@ Continue developing this project in the [Lovable editor](https://lovable.dev/pro
 
 ## Development
 
+On mobile (below 640px), Selected Work is a horizontally scrollable, snap-to-card
+list with the next project partially visible as a swipe cue. Wider screens retain
+the two-column grid.
+
+The hero's Download CV button downloads the bundled
+`src/assets/projects/kaleeswari_resume_m.pdf` file. Replace that PDF to update
+the downloadable resume.
+
+Buttons share a visible keyboard focus ring. The My work action stays
+transparent on hover, while navigation and outlined buttons use the primary
+color. Decorative underline and shimmer hover effects only run with a mouse
+or other fine pointer.
+
 Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh

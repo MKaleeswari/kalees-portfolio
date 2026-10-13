@@ -78,14 +78,19 @@
 }
 
 @utility link-underline {
-  @apply relative inline-block;
+  @apply relative;
 }
 .link-underline::after {
   content: "";
-  @apply absolute left-0 bottom-0 h-0.5 w-full origin-bottom-right scale-x-0 bg-primary transition-transform duration-300;
+  @apply pointer-events-none absolute left-0 bottom-0 h-0.5 w-full origin-bottom-right scale-x-0 bg-primary transition-transform duration-300;
 }
-.link-underline:hover::after {
+.link-underline:focus-visible::after {
   @apply origin-bottom-left scale-x-100;
+}
+@media (hover: hover) and (pointer: fine) {
+  .link-underline:hover::after {
+    @apply origin-bottom-left scale-x-100;
+  }
 }
 
 /* Site-wide background: soft brand glows over a dotted grid, fixed while scrolling */
@@ -111,7 +116,9 @@
   transform: translateX(-120%) skewX(-20deg);
   pointer-events: none;
 }
-.shimmer:hover::before { animation: shimmer 0.9s ease-out; }
+@media (hover: hover) and (pointer: fine) {
+  .shimmer:hover::before { animation: shimmer 0.9s ease-out; }
+}
 
 @layer base {
   html { scroll-padding-top: 6rem; }
