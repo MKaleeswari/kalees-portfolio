@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Home, Folder, Wrench, Mail, Phone, MapPin, GraduationCap, ArrowRight, ExternalLink, Download, Code2, Linkedin, Github, Sparkles, Bot, Workflow, Plug, ShieldCheck, Wallet, Coins, Image, Vote, Network, Smartphone, ShoppingBag, FileCode2, LayoutTemplate, Palette, Store, CheckCheck, Video, Search, Terminal, MessageSquare, Send, LoaderCircle } from "lucide-react";
+import { Home, Folder, Wrench, Mail, Phone, MapPin, GraduationCap, ArrowRight, ExternalLink, Download, Code2, Linkedin, Github, Sparkles, Bot, Workflow, Plug, ShieldCheck, Wallet, Coins, Image, Vote, Network, Smartphone, ShoppingBag, FileCode2, LayoutTemplate, Palette, Store, CheckCheck, Video, Search, Terminal, MessageSquare, Send, LoaderCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/components/ui/button";
@@ -496,8 +496,17 @@ function Index() {
                 const image = projectImage(p.title);
                 return (
                 <li key={p.title} data-reveal className="min-w-0 basis-[calc(90%-1rem)] shrink-0 snap-start sm:basis-auto">
-                  <article className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-[var(--shadow-hover)]">
-                    <div className="relative aspect-video w-full overflow-hidden border-b border-border bg-muted">
+                  <article className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-[var(--shadow-hover)]">
+                    {p.links[0] && (
+                      <a
+                        href={p.links[0].url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Open ${p.title} website in a new tab`}
+                        className="absolute inset-0 z-10 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                      />
+                    )}
+                    <div className="pointer-events-none relative z-20 aspect-video w-full overflow-hidden border-b border-border bg-muted">
                       {image ? (
                         <img src={image} alt={`${p.title} screenshot`} loading="lazy" className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
                       ) : (
@@ -506,12 +515,17 @@ function Index() {
                           <span className="text-[10px] uppercase tracking-normal">Screenshot coming soon</span>
                         </div>
                       )}
+                      {p.links[0] && (
+                        <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-nav/85 px-3 py-1.5 text-[10px] font-medium text-nav-foreground shadow-lg backdrop-blur-sm transition-colors group-hover:bg-primary">
+                          Visit project<ExternalLink size={12} />
+                        </span>
+                      )}
                     </div>
-                    <div className="flex flex-1 flex-col p-5">
+                    <div className="pointer-events-none relative z-20 flex flex-1 flex-col p-5">
                       <h3 className="text-base font-bold transition-colors group-hover:text-primary">{p.title}</h3>
                       <div className="mt-2 text-xs text-primary">{p.tag}</div>
                       <p className="mt-3 text-sm text-muted-foreground">{p.desc}</p>
-                      {p.links.length > 0 && <div className="mt-auto flex flex-wrap gap-4 pt-5">{p.links.map((link) => <Button key={link.url} asChild variant="link" className="h-auto p-0 text-xs"><a href={link.url} target="_blank" rel="noopener noreferrer">{link.label}<ExternalLink size={14} /></a></Button>)}</div>}
+                      {p.links.length > 0 && <div className="pointer-events-auto relative z-20 mt-auto flex flex-wrap gap-4 pt-5">{p.links.map((link) => <Button key={link.url} asChild variant="link" className="h-auto p-0 text-xs"><a href={link.url} target="_blank" rel="noopener noreferrer">{link.label}<ExternalLink size={14} /></a></Button>)}</div>}
                     </div>
                   </article>
                 </li>
@@ -519,21 +533,47 @@ function Index() {
               })}
             </ul>
             <div className="mt-4 sm:hidden" aria-label="Project carousel position">
-              <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
-                <span>Swipe to explore</span>
-                <span aria-live="polite"><span className="font-bold text-primary">{activeProjectIndex + 1}</span> / {projects.length}</span>
-              </div>
-              <div className="mt-3 flex items-center gap-1.5">
-                {projects.map((project, index) => (
-                  <button
-                    key={project.title}
-                    type="button"
-                    aria-label={`Show project ${index + 1}: ${project.title}`}
-                    aria-current={activeProjectIndex === index ? "true" : undefined}
-                    onClick={() => showProject(index)}
-                    className={`h-1.5 min-w-0 flex-1 rounded-full transition-all ${activeProjectIndex === index ? "bg-primary" : "bg-primary/15 hover:bg-primary/35"}`}
-                  />
-                ))}
+              <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-card/70 p-3">
+                <button
+                  type="button"
+                  aria-label="Show previous project"
+                  onClick={() => showProject(Math.max(0, activeProjectIndex - 1))}
+                  disabled={activeProjectIndex === 0}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span>Project <span className="ml-1 text-sm font-bold tabular-nums text-primary">{String(activeProjectIndex + 1).padStart(2, "0")}</span></span>
+                    <span className="tabular-nums">{String(projects.length).padStart(2, "0")}</span>
+                  </div>
+                  <div
+                    role="progressbar"
+                    aria-label="Project carousel position"
+                    aria-valuemin={1}
+                    aria-valuemax={projects.length}
+                    aria-valuenow={activeProjectIndex + 1}
+                    className="mt-2 h-1 overflow-hidden rounded-full bg-primary/15"
+                  >
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-300"
+                      style={{ width: `${((activeProjectIndex + 1) / projects.length) * 100}%` }}
+                    />
+                  </div>
+                  <p aria-live="polite" className="mt-2 truncate text-xs font-medium text-foreground">
+                    {projects[activeProjectIndex]?.title}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Show next project"
+                  onClick={() => showProject(Math.min(projects.length - 1, activeProjectIndex + 1))}
+                  disabled={activeProjectIndex === projects.length - 1}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <ChevronRight size={18} />
+                </button>
               </div>
             </div>
           </section>
