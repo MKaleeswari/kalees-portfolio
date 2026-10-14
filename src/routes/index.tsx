@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
-import { Home, Folder, Wrench, Mail, Phone, MapPin, GraduationCap, ArrowRight, ExternalLink, Download, Code2, Linkedin, Sparkles, Bot, Workflow, Plug, ShieldCheck, Wallet, Coins, Image, Vote, Network, Smartphone, ShoppingBag, FileCode2, LayoutTemplate, Palette, Store, CheckCheck, Video, Search, Terminal, MessageSquare } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Home, Folder, Wrench, Mail, Phone, MapPin, GraduationCap, ArrowRight, ExternalLink, Download, Code2, Linkedin, Github, Sparkles, Bot, Workflow, Plug, ShieldCheck, Wallet, Coins, Image, Vote, Network, Smartphone, ShoppingBag, FileCode2, LayoutTemplate, Palette, Store, CheckCheck, Video, Search, Terminal, MessageSquare, Send, LoaderCircle } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import profileImage from "@/assets/projects/profile.jpg";
 import beecomImage from "@/assets/projects/beecom.png";
 import beeioImage from "@/assets/projects/beeio.png";
@@ -194,8 +196,105 @@ const experience = [
   { years: "Sep 2021 — Dec 2023", role: "Programmer", org: "Osiz Technologies Pvt. Ltd.", note: "Madurai · Developed React interfaces for education and Web3 products, including Osiz Labs, My Wig, X-PET, and Parifi. Integrated REST APIs, MetaMask, and smart contracts." },
 ];
 
+type ContactField = "name" | "email" | "subject" | "message";
+type ContactErrors = Partial<Record<ContactField, string>>;
+
 function Index() {
   const rootRef = useRef<HTMLDivElement>(null);
+  const workCarouselRef = useRef<HTMLUListElement>(null);
+  const [activeProjectIndex, setActiveProjectIndex] = useState(0);
+  const [isSending, setIsSending] = useState(false);
+  const [contactErrors, setContactErrors] = useState<ContactErrors>({});
+  const [contactStatus, setContactStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const web3FormsAccessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || "ff09064a-2fad-45fe-931f-2d879a84031e";
+  const web3FormsConfigured = Boolean(web3FormsAccessKey);
+
+  const updateProjectIndicator = () => {
+    const carousel = workCarouselRef.current;
+    if (!carousel) return;
+
+    const viewportCenter = carousel.scrollLeft + carousel.clientWidth / 2;
+    const cards = Array.from(carousel.children) as HTMLElement[];
+    const closestIndex = cards.reduce((closest, card, index) => {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const closestCenter = cards[closest].offsetLeft + cards[closest].offsetWidth / 2;
+      return Math.abs(cardCenter - viewportCenter) < Math.abs(closestCenter - viewportCenter) ? index : closest;
+    }, 0);
+
+    setActiveProjectIndex(closestIndex);
+  };
+
+  const showProject = (index: number) => {
+    const card = workCarouselRef.current?.children[index] as HTMLElement | undefined;
+    card?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+  };
+
+  const clearContactError = (field: ContactField) => {
+    setContactErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const sendContactMessage = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setContactStatus(null);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const name = String(formData.get("name") || "").trim();
+    const email = String(formData.get("email") || "").trim();
+    const subject = String(formData.get("subject") || "").trim();
+    const message = String(formData.get("message") || "").trim();
+    const validationErrors: ContactErrors = {};
+
+    if (!name) validationErrors.name = "Please enter your name.";
+    if (!email) validationErrors.email = "Please enter your email address.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) validationErrors.email = "Please enter a valid email address.";
+    if (!subject) validationErrors.subject = "Please enter a subject.";
+    if (!message) validationErrors.message = "Please enter your message.";
+    else if (message.length < 10) validationErrors.message = "Your message must be at least 10 characters.";
+
+    setContactErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
+    if (!web3FormsConfigured) {
+      setContactStatus({
+        type: "error",
+        message: "The contact form is not configured yet. Please email me directly instead.",
+      });
+      return;
+    }
+
+    formData.append("access_key", web3FormsAccessKey);
+    formData.append("from_name", "Kaleeswari Portfolio");
+    setIsSending(true);
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await response.json() as { success?: boolean; message?: string };
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Web3Forms could not send your message. Please try again.");
+      }
+
+      form.reset();
+      setContactErrors({});
+      setContactStatus({ type: "success", message: "Thanks for reaching out. Your message has been sent." });
+    } catch (error) {
+      setContactStatus({
+        type: "error",
+        message: error instanceof Error ? error.message : "Unable to send your message. Please try again.",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
@@ -214,8 +313,9 @@ function Index() {
       });
 
       gsap.utils.toArray<HTMLElement>("[data-heading]").forEach((el) => {
+        const isMobile = window.matchMedia("(max-width: 767px)").matches;
         gsap.from(el, {
-          x: 80, opacity: 0, duration: 1, ease: "power3.out",
+          x: isMobile ? 0 : 80, y: isMobile ? 24 : 0, opacity: 0, duration: 1, ease: "power3.out",
           scrollTrigger: { trigger: el, start: "top 80%", toggleActions: "play none none reverse" },
         });
       });
@@ -250,7 +350,7 @@ function Index() {
   }, []);
 
   return (
-    <div ref={rootRef} className="site-bg min-h-screen">
+    <div ref={rootRef} className="site-bg min-h-screen overflow-x-clip">
       <nav className="fixed left-1/2 top-6 z-50 -translate-x-1/2">
         <div className="flex items-center gap-1 rounded-full bg-nav/85 px-2 py-1.5 shadow-[0_10px_40px_-10px_color-mix(in_oklab,var(--primary)_50%,transparent)] backdrop-blur">
           {[
@@ -300,6 +400,7 @@ function Index() {
               <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground"><MapPin size={14} /> Aruppukottai, Virudhunagar</p>
               <div className="mt-5 flex justify-center gap-3">
                 <Button asChild variant="outline" size="icon"><a href="https://www.linkedin.com/in/kaleeswari-m/" target="_blank" rel="noopener noreferrer" aria-label="Kaleeswari on LinkedIn" title="LinkedIn"><Linkedin size={18} /></a></Button>
+                <Button asChild variant="outline" size="icon"><a href="https://github.com/MKaleeswari" target="_blank" rel="noopener noreferrer" aria-label="Kaleeswari on GitHub" title="GitHub"><Github size={18} /></a></Button>
                 <Button asChild variant="outline" size="icon"><a href="https://mail.google.com/mail/?view=cm&fs=1&to=kaleeswari2220@gmail.com" target="_blank" rel="noopener noreferrer" aria-label="Email Kaleeswari" title="Email Kaleeswari"><Mail size={18} /></a></Button>
                 <Button asChild variant="outline" size="icon"><a href="tel:+916385789951" aria-label="Call Kaleeswari" title="Call Kaleeswari"><Phone size={18} /></a></Button>
               </div>
@@ -330,7 +431,7 @@ function Index() {
             <p data-reveal className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
               I build responsive web applications and product interfaces with React.js, Next.js, and Shopify — combining frontend engineering with AI-assisted development to deliver clean, scalable, production-ready experiences.
             </p>
-            <div data-reveal className="mt-6 grid w-fit grid-cols-3 gap-x-10 gap-y-4">
+            <div data-reveal className="mt-6 grid w-full grid-cols-3 gap-4 sm:w-fit sm:gap-x-10">
               <Stat n="4+" label={"YEARS\nEXPERIENCE"} />
               <Stat n="React" label={"FRONTEND\nDEVELOPMENT"} />
               <Stat n="AI" label={"ASSISTED\nDEVELOPMENT"} />
@@ -385,8 +486,10 @@ function Index() {
           <section id="work" data-section>
             <h2 data-heading className="text-2xl font-bold uppercase">Selected Work</h2>
             <ul
+              ref={workCarouselRef}
               aria-label="Selected work projects"
               tabIndex={0}
+              onScroll={updateProjectIndicator}
               className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain py-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:py-0"
             >
               {projects.map((p) => {
@@ -415,6 +518,24 @@ function Index() {
                 );
               })}
             </ul>
+            <div className="mt-4 sm:hidden" aria-label="Project carousel position">
+              <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+                <span>Swipe to explore</span>
+                <span aria-live="polite"><span className="font-bold text-primary">{activeProjectIndex + 1}</span> / {projects.length}</span>
+              </div>
+              <div className="mt-3 flex items-center gap-1.5">
+                {projects.map((project, index) => (
+                  <button
+                    key={project.title}
+                    type="button"
+                    aria-label={`Show project ${index + 1}: ${project.title}`}
+                    aria-current={activeProjectIndex === index ? "true" : undefined}
+                    onClick={() => showProject(index)}
+                    className={`h-1.5 min-w-0 flex-1 rounded-full transition-all ${activeProjectIndex === index ? "bg-primary" : "bg-primary/15 hover:bg-primary/35"}`}
+                  />
+                ))}
+              </div>
+            </div>
           </section>
 
           {/* Tools */}
@@ -448,13 +569,80 @@ function Index() {
           {/* Contact */}
           <section id="contact" data-section>
             <h2 data-heading className="text-2xl font-bold uppercase">Contact</h2>
-            <div data-reveal className="mt-8 space-y-6">
-              <p className="text-muted-foreground">Let’s talk about frontend development, Shopify, or your next AI-assisted product experience.</p>
-              <a className="flex w-fit items-center gap-3 break-all text-sm transition-colors hover:text-primary" href="https://mail.google.com/mail/?view=cm&fs=1&to=kaleeswari2220@gmail.com" target="_blank" rel="noopener noreferrer"><Mail size={18} className="shrink-0 text-primary" />kaleeswari2220@gmail.com</a>
-              <a className="flex w-fit items-center gap-3 text-sm transition-colors hover:text-primary" href="tel:+916385789951"><Phone size={18} className="text-primary" />+91 6385789951</a>
-              <a className="flex w-fit items-center gap-3 text-sm transition-colors hover:text-primary" href="https://www.linkedin.com/in/kaleeswari-m/" target="_blank" rel="noopener noreferrer"><Linkedin size={18} className="text-primary" />LinkedIn<ExternalLink size={14} /></a>
-              <p className="flex items-center gap-3 text-sm text-muted-foreground"><MapPin size={18} className="shrink-0 text-primary" />Aruppukottai, Virudhunagar</p>
-              <Button asChild className="shimmer btn-glow hover:btn-glow-hover"><a href="https://mail.google.com/mail/?view=cm&fs=1&to=kaleeswari2220@gmail.com" target="_blank" rel="noopener noreferrer">Email me<ArrowRight size={16} /></a></Button>
+            <div data-reveal className="mt-8 flex flex-col gap-8">
+            <form noValidate onSubmit={sendContactMessage} className="order-2 w-full space-y-5 rounded-2xl border border-primary/20 bg-[linear-gradient(145deg,color-mix(in_oklab,var(--primary)_8%,var(--card)),var(--card)_70%)] p-5 shadow-[var(--shadow-card)] sm:p-7">
+              <input type="checkbox" name="botcheck" className="hidden" tabIndex={-1} autoComplete="off" />
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label htmlFor="contact-name" className="text-sm font-medium">Your name</label>
+                  <Input id="contact-name" name="name" autoComplete="name" placeholder="Jane Smith" required maxLength={100} disabled={isSending} aria-invalid={Boolean(contactErrors.name)} aria-describedby={contactErrors.name ? "contact-name-error" : undefined} onChange={() => clearContactError("name")} className={`h-11 bg-background/80 focus-visible:ring-primary ${contactErrors.name ? "border-red-500 focus-visible:ring-red-500" : "border-primary/15"}`} />
+                  {contactErrors.name && <p id="contact-name-error" role="alert" className="text-xs font-medium text-red-600">{contactErrors.name}</p>}
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="contact-email" className="text-sm font-medium">Email address</label>
+                  <Input id="contact-email" name="email" type="email" autoComplete="email" placeholder="jane@example.com" required maxLength={254} disabled={isSending} aria-invalid={Boolean(contactErrors.email)} aria-describedby={contactErrors.email ? "contact-email-error" : undefined} onChange={() => clearContactError("email")} className={`h-11 bg-background/80 focus-visible:ring-primary ${contactErrors.email ? "border-red-500 focus-visible:ring-red-500" : "border-primary/15"}`} />
+                  {contactErrors.email && <p id="contact-email-error" role="alert" className="text-xs font-medium text-red-600">{contactErrors.email}</p>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="contact-subject" className="text-sm font-medium">Subject</label>
+                <Input id="contact-subject" name="subject" placeholder="How can I help?" required maxLength={150} disabled={isSending} aria-invalid={Boolean(contactErrors.subject)} aria-describedby={contactErrors.subject ? "contact-subject-error" : undefined} onChange={() => clearContactError("subject")} className={`h-11 bg-background/80 focus-visible:ring-primary ${contactErrors.subject ? "border-red-500 focus-visible:ring-red-500" : "border-primary/15"}`} />
+                {contactErrors.subject && <p id="contact-subject-error" role="alert" className="text-xs font-medium text-red-600">{contactErrors.subject}</p>}
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="contact-message" className="text-sm font-medium">Message</label>
+                <Textarea id="contact-message" name="message" placeholder="Tell me a little about your project..." required minLength={10} maxLength={5000} disabled={isSending} aria-invalid={Boolean(contactErrors.message)} aria-describedby={contactErrors.message ? "contact-message-error" : undefined} onChange={() => clearContactError("message")} className={`min-h-36 resize-y bg-background/80 focus-visible:ring-primary ${contactErrors.message ? "border-red-500 focus-visible:ring-red-500" : "border-primary/15"}`} />
+                {contactErrors.message && <p id="contact-message-error" role="alert" className="text-xs font-medium text-red-600">{contactErrors.message}</p>}
+              </div>
+              {contactStatus && (
+                <p role={contactStatus.type === "error" ? "alert" : "status"} className={contactStatus.type === "success" ? "text-sm text-green-700" : "text-sm font-medium text-red-600"}>
+                  {contactStatus.message}{" "}
+                  {contactStatus.type === "error" && !web3FormsConfigured && (
+                    <a href="mailto:kaleeswari2220@gmail.com" className="font-medium underline underline-offset-4">Email me directly</a>
+                  )}
+                </p>
+              )}
+              {!web3FormsConfigured && !contactStatus && (
+                <p role="status" className="text-sm text-muted-foreground">
+                  The form is being set up. You can <a href="mailto:kaleeswari2220@gmail.com" className="font-medium text-primary underline underline-offset-4">email me directly</a> in the meantime.
+                </p>
+              )}
+              <Button type="submit" disabled={isSending} className="shimmer btn-glow hover:btn-glow-hover disabled:opacity-70">
+                {isSending ? <><LoaderCircle size={16} className="animate-spin" />Sending...</> : <>Send message<Send size={16} /></>}
+              </Button>
+            </form>
+
+            <div className="order-1 grid overflow-hidden rounded-2xl border border-primary/15 bg-card shadow-[var(--shadow-card)] lg:grid-cols-[0.85fr_1.15fr]">
+              <div className="flex flex-col justify-center bg-[linear-gradient(145deg,var(--primary),var(--primary-glow))] p-6 text-primary-foreground sm:p-8">
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-foreground/70">Get in touch</span>
+                <h3 className="mt-3 text-2xl font-bold">Let’s work together.</h3>
+                <p className="mt-3 max-w-md text-sm leading-6 text-primary-foreground/80">Let’s talk about frontend development, Shopify, or your next AI-assisted product experience.</p>
+              </div>
+
+              <div className="grid gap-3 bg-primary/[0.035] p-4 sm:p-6">
+                <a className="group flex min-w-0 items-center gap-4 rounded-xl border border-primary/10 bg-card p-4 transition-all hover:border-primary/35 hover:shadow-[var(--shadow-card)]" href="mailto:kaleeswari2220@gmail.com">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary"><Mail size={19} /></span>
+                  <span className="flex min-w-0 flex-col gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Email</span>
+                    <span className="break-all text-sm font-semibold leading-5 group-hover:text-primary">kaleeswari2220@gmail.com</span>
+                  </span>
+                </a>
+                <a className="group flex items-center gap-4 rounded-xl border border-primary/10 bg-card p-4 transition-all hover:border-primary/35 hover:shadow-[var(--shadow-card)]" href="tel:+916385789951">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary"><Phone size={19} /></span>
+                  <span className="flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Phone</span>
+                    <span className="text-sm font-semibold leading-5 group-hover:text-primary">+91 63857 89951</span>
+                  </span>
+                </a>
+                <div className="flex items-center gap-4 rounded-xl border border-primary/10 bg-card p-4">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary"><MapPin size={19} /></span>
+                  <span className="flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Location</span>
+                    <span className="text-sm font-semibold leading-5">Aruppukottai, Virudhunagar</span>
+                  </span>
+                </div>
+              </div>
+            </div>
             </div>
             <p className="mt-16 border-t border-border pt-6 text-xs text-muted-foreground">© {new Date().getFullYear()} Kaleeswari M</p>
           </section>
@@ -467,11 +655,11 @@ function Index() {
 
 function Stat({ n, label }: { n: string; label: string }) {
   return (
-    <div className="group cursor-default">
+    <div className="group min-w-0 cursor-default">
       <div className="text-3xl font-extrabold transition-all duration-300 group-hover:scale-110 group-hover:text-primary origin-left">
         {n}
       </div>
-      <div className="mt-1 whitespace-pre text-[10px] font-medium text-muted-foreground">{label}</div>
+      <div className="mt-1 whitespace-pre-line break-words text-[10px] font-medium leading-4 text-muted-foreground">{label}</div>
     </div>
   );
 }

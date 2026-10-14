@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import faviconImage from "../assets/projects/profile.jpg";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -96,7 +97,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/profile.jpg", type: "image/x-icon" },
+      { rel: "icon", href: faviconImage, type: "image/jpeg" },
+      { rel: "apple-touch-icon", href: faviconImage },
     ],
   }),
   shellComponent: RootShell,

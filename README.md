@@ -29,6 +29,13 @@ transparent on hover, while navigation and outlined buttons use the primary
 color. Decorative underline and shimmer hover effects only run with a mouse
 or other fine pointer.
 
+## Contact form
+
+The contact form sends messages through Web3Forms using its browser-safe access
+key. To rotate or override that key, copy `.env.example` to `.env.local`, set
+`VITE_WEB3FORMS_ACCESS_KEY`, and add the same value to the hosting provider's
+environment variables before rebuilding.
+
 Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
