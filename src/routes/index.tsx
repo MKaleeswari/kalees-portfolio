@@ -484,10 +484,10 @@ function Index() {
 
           {/* Work */}
           <section id="work" data-section>
-            <h2 data-heading className="text-2xl font-bold uppercase">Selected Work</h2>
+            <h2 data-heading className="text-2xl font-bold uppercase">My Works</h2>
             <ul
               ref={workCarouselRef}
-              aria-label="Selected work projects"
+              aria-label="My Works projects"
               tabIndex={0}
               onScroll={updateProjectIndicator}
               className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain py-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:py-0"
